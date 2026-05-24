@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#060d17"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<title>PropFlow – Rent Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:#060d17;color:#c9e0ff;font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+  :root{--bg:#060d17;--bg2:#0a1624;--bg3:#06111e;--border:#0d2240;--border2:#1e3a5f;--text:#c9e0ff;--text2:#e2f0ff;--muted:#2d5f94;--accent:#0070f3;--green:#00ffa3;--amber:#ffb800;--sky:#38b2f8;--violet:#a78bfa;--danger:#c0392b}
+
+  /* ── LAYOUT ── */
+  #app{display:flex;min-height:100vh}
+  #sidebar{width:220px;background:#080f1a;border-right:1px solid #0d1e35;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;transition:transform .3s}
+  #main{margin-left:220px;padding:28px 32px;flex:1;min-height:100vh}
+  .sidebar-header{padding:24px 20px 18px;border-bottom:1px solid #0d1e35}
+  .sidebar-brand{font-size:10px;color:#2d5f94;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px}
+  .sidebar-title{font-family:'DM Serif Display',serif;font-size:20px;color:#e2f0ff;line-height:1.2}
+  nav{flex:1;padding:14px 10px}
+  .nav-btn{display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:transparent;color:#4a6f9a;font-weight:500;font-size:14px;margin-bottom:2px;border-left:2px solid transparent;transition:all .2s;font-family:'DM Sans',sans-serif}
+  .nav-btn.active{background:linear-gradient(135deg,#0070f322,#0050cc11);color:#38b2f8;font-weight:700;border-left:2px solid #0070f3}
+  .nav-icon{font-size:18px}
+  .sidebar-footer{padding:12px 20px;border-top:1px solid #0d1e35;font-size:11px;color:#1e3a5f}
+
+  /* ── MOBILE NAV ── */
+  #hamburger{display:none;position:fixed;top:12px;left:12px;z-index:300;background:#0a1624;border:1px solid #1e3a5f;border-radius:8px;width:40px;height:40px;cursor:pointer;align-items:center;justify-content:center;flex-direction:column;gap:5px}
+  #hamburger span{display:block;width:20px;height:2px;background:#38b2f8;border-radius:2px;transition:.2s}
+  #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:199}
+  #mobile-topbar{display:none;background:#080f1a;border-bottom:1px solid #0d1e35;padding:12px 16px 12px 60px;position:fixed;top:0;left:0;right:0;z-index:100}
+  #mobile-topbar .title{font-family:'DM Serif Display',serif;font-size:17px;color:#e2f0ff}
+
+  /* ── CARDS ── */
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 20px}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+  .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 20px}
+  .stat-icon{font-size:20px;margin-bottom:8px}
+  .stat-val{font-size:22px;font-weight:700;color:#e2f0ff;font-family:'DM Serif Display',serif}
+  .stat-label{font-size:12px;color:var(--muted);margin-top:4px}
+
+  /* ── BUTTONS ── */
+  .btn{border-radius:8px;padding:9px 20px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s;font-family:'DM Sans',sans-serif;white-space:nowrap}
+  .btn:hover{opacity:.82}
+  .btn-primary{background:linear-gradient(135deg,#0070f3,#0050cc);color:#fff;border:none}
+  .btn-ghost{background:transparent;color:#4a8fc5;border:1px solid #1e3a5f}
+  .btn-danger{background:linear-gradient(135deg,#c0392b,#922b21);color:#fff;border:none}
+  .btn-success{background:linear-gradient(135deg,#00b894,#00856d);color:#fff;border:none}
+  .btn-violet{background:transparent;color:#a78bfa;border:1px solid #3b1f8c}
+  .btn-sm{padding:6px 14px;font-size:12px}
+
+  /* ── FORMS ── */
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:11px;color:#4a8fc5;font-weight:700;letter-spacing:1px;margin-bottom:5px;text-transform:uppercase}
+  .field input,.field select,.field textarea{width:100%;background:#07111d;border:1px solid #1e3a5f;border-radius:8px;padding:10px 12px;color:#c9e0ff;font-size:14px;outline:none;font-family:'DM Sans',sans-serif}
+  .field input:focus,.field select:focus{border-color:#0070f3}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+
+  /* ── MODAL ── */
+  .modal-bg{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.72);backdrop-filter:blur(4px)}
+  .modal-box{background:#0f1721;border:1px solid #1e3a5f;border-radius:16px;padding:24px 28px;width:min(560px,95vw);max-height:92vh;overflow-y:auto;box-shadow:0 24px 80px #000a;position:relative}
+  .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+  .modal-title{font-family:'DM Serif Display',serif;font-size:18px;color:#e2f0ff}
+  .modal-close{background:none;border:none;color:#4a6fa5;font-size:22px;cursor:pointer;line-height:1}
+
+  /* ── TABLE ── */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{width:100%;border-collapse:separate;border-spacing:0 6px;min-width:700px}
+  th{padding:0 10px 8px;text-align:left;font-size:11px;color:#2d5f94;text-transform:uppercase;letter-spacing:1px;font-weight:700}
+  td{padding:11px 10px;color:#8aa8cc;font-size:13px;vertical-align:middle;background:#0a1624}
+  td:first-child{border-radius:10px 0 0 10px}
+  td:last-child{border-radius:0 10px 10px 0}
+  .td-num{color:#c9e0ff}
+  .td-total{color:#00ffa3;font-weight:700;font-size:15px}
+
+  /* ── BADGE ── */
+  .badge{padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:1px}
+  .badge-green{background:#00ffa322;color:#00ffa3;border:1px solid #00ffa344}
+  .badge-sky{background:#38bdf822;color:#38bdf8;border:1px solid #38bdf844}
+
+  /* ── PAGE HEADERS ── */
+  .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+  .page-title{font-family:'DM Serif Display',serif;font-size:28px;color:#e2f0ff}
+  .page-sub{color:#2d5f94;font-size:13px;margin-top:2px}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap}
+
+  /* ── TENANT CARD ── */
+  .tenant-card{background:#0a1624;border:1px solid #0d2240;border-radius:14px;padding:16px 20px;margin-bottom:10px}
+  .tenant-grid{display:grid;grid-template-columns:2fr 1.5fr 1.5fr auto auto;gap:12px;align-items:center}
+
+  /* ── PREVIEW BOX ── */
+  .preview-box{background:#06111e;border-radius:10px;padding:14px 16px;margin-bottom:14px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .preview-label{font-size:11px;color:#2d5f94}
+  .preview-val{font-weight:700;margin-top:2px}
+
+  /* ── SUMMARY CARDS ── */
+  .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+
+  /* ── FILTERS ── */
+  .filter-box{background:#0a1624;border:1px solid #0d2240;border-radius:14px;padding:18px 20px;margin-bottom:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+
+  /* ── DASHBOARD TENANT CARDS ── */
+  .dash-tenant-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+  .dash-tenant-card{background:#0a1624;border:1px solid #0d2240;border-radius:14px;padding:16px 18px}
+  .mini-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+  .mini-stat{background:#06111e;border-radius:8px;padding:8px 10px}
+  .mini-stat-label{font-size:11px;color:#2d5f94}
+  .mini-stat-val{font-weight:700;margin-top:2px;font-size:13px}
+
+  /* ── TOAST ── */
+  #toast{position:fixed;bottom:24px;right:24px;background:#00b894;color:#fff;padding:10px 20px;border-radius:8px;font-weight:700;font-size:13px;opacity:0;transition:opacity .3s;z-index:9999;pointer-events:none}
+  #toast.show{opacity:1}
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:768px){
+    #hamburger{display:flex}
+    #mobile-topbar{display:block}
+    #sidebar{transform:translateX(-100%)}
+    #sidebar.open{transform:translateX(0)}
+    #overlay.show{display:block}
+    #main{margin-left:0;padding:72px 14px 90px}
+    .stat-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+    .stat-val{font-size:18px}
+    .summary-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+    .form-grid{grid-template-columns:1fr}
+    .tenant-grid{grid-template-columns:1fr auto}
+    .tenant-detail{display:none}
+    .page-header{gap:10px}
+    .page-title{font-size:22px}
+    .btn-row{gap:6px}
+    .btn{padding:8px 14px;font-size:13px}
+    .preview-box{grid-template-columns:repeat(2,1fr)}
+    .dash-tenant-grid{grid-template-columns:1fr}
+    .filter-box{grid-template-columns:1fr 1fr}
+    .modal-box{padding:18px 16px}
+    /* bottom nav for mobile */
+    #bottom-nav{display:flex}
+  }
+  @media(max-width:480px){
+    .stat-grid{grid-template-columns:repeat(2,1fr)}
+    .summary-grid{grid-template-columns:1fr 1fr}
+    .filter-box{grid-template-columns:1fr}
+    .btn-row .btn-ghost{display:none}
+    #main{padding:68px 12px 88px}
+  }
+
+  /* ── BOTTOM NAV (mobile) ── */
+  #bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#080f1a;border-top:1px solid #0d1e35;z-index:200;justify-content:space-around;padding:6px 0 8px}
+  .bnav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:#4a6f9a;font-size:10px;font-weight:600;font-family:'DM Sans',sans-serif;padding:4px 10px;border-radius:8px;transition:color .2s}
+  .bnav-btn.active{color:#38b2f8}
+  .bnav-icon{font-size:20px}
+
+  /* ── EMPTY STATE ── */
+  .empty{color:#1e3a5f;padding:28px;text-align:center;font-size:14px}
+
+  /* scrollbar */
+  ::-webkit-scrollbar{width:4px;height:4px}
+  ::-webkit-scrollbar-track{background:#06111e}
+  ::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:4px}
+</style>
+</head>
+<body>
+
+<!-- HAMBURGER -->
+<button id="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+  <span></span><span></span><span></span>
+</button>
+<!-- OVERLAY -->
+<div id="overlay" onclick="toggleSidebar()"></div>
+<!-- MOBILE TOPBAR -->
+<div id="mobile-topbar"><span class="title">PropFlow – Rent Manager</span></div>
+
+<div id="app">
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">PropFlow</div>
+      <div class="sidebar-title">Rent Manager</div>
+    </div>
+    <nav>
+      <button class="nav-btn active" onclick="setTab('dashboard')" id="nav-dashboard"><span class="nav-icon">⬡</span> Dashboard</button>
+      <button class="nav-btn" onclick="setTab('tenants')" id="nav-tenants"><span class="nav-icon">◈</span> Tenants</button>
+      <button class="nav-btn" onclick="setTab('records')" id="nav-records"><span class="nav-icon">▦</span> Records</button>
+      <button class="nav-btn" onclick="setTab('reports')" id="nav-reports"><span class="nav-icon">◎</span> Reports</button>
+    </nav>
+    <div class="sidebar-footer">Electricity Rate: ₹10/unit</div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div id="tab-dashboard"></div>
+    <div id="tab-tenants" style="display:none"></div>
+    <div id="tab-records" style="display:none"></div>
+    <div id="tab-reports" style="display:none"></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div id="bottom-nav">
+  <button class="bnav-btn active" onclick="setTab('dashboard')" id="bnav-dashboard"><span class="bnav-icon">⬡</span>Dashboard</button>
+  <button class="bnav-btn" onclick="setTab('tenants')" id="bnav-tenants"><span class="bnav-icon">◈</span>Tenants</button>
+  <button class="bnav-btn" onclick="setTab('records')" id="bnav-records"><span class="bnav-icon">▦</span>Records</button>
+  <button class="bnav-btn" onclick="setTab('reports')" id="bnav-reports"><span class="bnav-icon">◎</span>Reports</button>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- MODALS -->
+<div id="modal-tenant" class="modal-bg" style="display:none" onclick="closeModal('tenant')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-tenant-title">Add New Tenant</div>
+      <button class="modal-close" onclick="closeModal('tenant')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="field"><label>Full Name *</label><input id="tf-name" placeholder="John Doe"/></div>
+      <div class="field"><label>Unit / Flat No.</label><input id="tf-unit" placeholder="B-204"/></div>
+      <div class="field"><label>Phone</label><input id="tf-phone" type="tel" placeholder="+91 98765 43210"/></div>
+      <div class="field"><label>Email</label><input id="tf-email" type="email" placeholder="john@email.com"/></div>
+      <div class="field"><label>Monthly Rent (₹)</label><input id="tf-rent" type="number" placeholder="2000"/></div>
+      <div class="field"><label>Security Deposit (₹)</label><input id="tf-deposit" type="number" placeholder="10000"/></div>
+    </div>
+    <div class="field"><label>Address</label><input id="tf-address" placeholder="House no, Street, City"/></div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px">
+      <button class="btn btn-ghost" onclick="closeModal('tenant')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTenant()">Save Tenant</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-record" class="modal-bg" style="display:none" onclick="closeModal('record')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-record-title">Add Monthly Record</div>
+      <button class="modal-close" onclick="closeModal('record')">✕</button>
+    </div>
+    <div class="field"><label>Tenant *</label>
+      <select id="rf-tenant" onchange="onTenantChange()">
+        <option value="">Select tenant...</option>
+      </select>
+    </div>
+    <div class="form-grid">
+      <div class="field"><label>Year</label>
+        <select id="rf-year">
+          <option>2022</option><option>2023</option><option>2024</option><option>2025</option><option selected>2026</option>
+        </select>
+      </div>
+      <div class="field"><label>Month</label>
+        <select id="rf-month">
+          <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
+          <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
+          <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
+          <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+        </select>
+      </div>
+      <div class="field"><label>Rent (₹)</label><input id="rf-rent" type="number" placeholder="2000"/></div>
+      <div class="field"><label>Maintenance (₹)</label><input id="rf-maint" type="number" value="0" placeholder="0"/></div>
+      <div class="field"><label>Previous Reading</label><input id="rf-prev" type="number" placeholder="0" oninput="updatePreview()"/></div>
+      <div class="field"><label>New Reading</label><input id="rf-new" type="number" placeholder="0" oninput="updatePreview()"/></div>
+    </div>
+    <div id="rec-preview" class="preview-box" style="display:none">
+      <div><div class="preview-label">Units Used</div><div class="preview-val" id="pv-units" style="color:#38b2f8"></div></div>
+      <div><div class="preview-label">Elec. Amt</div><div class="preview-val" id="pv-elec" style="color:#ffb800"></div></div>
+      <div><div class="preview-label">Rent</div><div class="preview-val" id="pv-rent" style="color:#c9e0ff"></div></div>
+      <div><div class="preview-label">Total</div><div class="preview-val" id="pv-total" style="color:#00ffa3"></div></div>
+    </div>
+    <div class="field"><label>Note (optional)</label><input id="rf-note" placeholder="e.g. Late payment, advance…"/></div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px">
+      <button class="btn btn-ghost" onclick="closeModal('record')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRecord()">Save Record</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ELEC_RATE = 10;
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+let tenants = [], records = [], currentTab = "dashboard";
+let editTenantId = null, editRecordId = null;
+
+// ── Storage (localStorage) ───────────────────────────────────────────────────
+function saveData(){ localStorage.setItem("rms_tenants", JSON.stringify(tenants)); localStorage.setItem("rms_records", JSON.stringify(records)); }
+function loadData(){ try{ tenants = JSON.parse(localStorage.getItem("rms_tenants")||"[]"); records = JSON.parse(localStorage.getItem("rms_records")||"[]"); }catch{} }
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const uid = () => Math.random().toString(36).slice(2,10);
+const fmt = n => "₹" + Number(n||0).toLocaleString("en-IN",{minimumFractionDigits:2});
+const enrich = r => {
+  const units = Math.max(0, Number(r.newReading) - Number(r.prevReading));
+  const elecAmt = units * ELEC_RATE;
+  const total = Number(r.rent) + elecAmt + Number(r.maintenance||0);
+  return {...r, units, elecAmt, total};
+};
+const enriched = () => records.map(enrich);
+const getTenant = id => tenants.find(t => t.id === id);
+function toast(msg){ const el=document.getElementById("toast"); el.textContent=msg; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),2000); }
+
+// ── Navigation ───────────────────────────────────────────────────────────────
+function setTab(tab){
+  currentTab = tab;
+  ["dashboard","tenants","records","reports"].forEach(t => {
+    document.getElementById("tab-"+t).style.display = t===tab ? "" : "none";
+    document.getElementById("nav-"+t).classList.toggle("active", t===tab);
+    const bn = document.getElementById("bnav-"+t);
+    if(bn) bn.classList.toggle("active", t===tab);
+  });
+  if(window.innerWidth<=768) closeSidebar();
+  render();
+}
+
+function toggleSidebar(){
+  const s = document.getElementById("sidebar"), o = document.getElementById("overlay");
+  s.classList.toggle("open"); o.classList.toggle("show");
+}
+function closeSidebar(){
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+}
+
+// ── Render router ────────────────────────────────────────────────────────────
+function render(){
+  if(currentTab==="dashboard") renderDashboard();
+  else if(currentTab==="tenants") renderTenants();
+  else if(currentTab==="records") renderRecords();
+  else if(currentTab==="reports") renderReports();
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────────────────────
+function renderDashboard(){
+  const now = new Date(), cm = now.getMonth()+1, cy = now.getFullYear();
+  const thisMonth = enriched().filter(r => Number(r.month)===cm && Number(r.year)===cy);
+  const mRent = thisMonth.reduce((s,r)=>s+Number(r.rent),0);
+  const mElec = thisMonth.reduce((s,r)=>s+r.elecAmt,0);
+  const mTotal = thisMonth.reduce((s,r)=>s+r.total,0);
+
+  const tenantCards = tenants.map(t => {
+    const tRecs = enriched().filter(r=>r.tenantId===t.id);
+    const tot = tRecs.reduce((s,r)=>s+r.total,0);
+    const rent = tRecs.reduce((s,r)=>s+Number(r.rent),0);
+    const elec = tRecs.reduce((s,r)=>s+r.elecAmt,0);
+    const last = [...tRecs].sort((a,b)=>b.year-a.year||b.month-a.month)[0];
+    return `<div class="dash-tenant-card">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
+        <div>
+          <div style="font-weight:700;color:#e2f0ff;font-size:15px">${t.name}</div>
+          <div style="font-size:12px;color:#2d5f94">${t.unit||"Unit N/A"} &bull; ${t.phone||"—"}</div>
+        </div>
+        <span class="badge badge-green">Active</span>
+      </div>
+      <div class="mini-stats">
+        <div class="mini-stat"><div 
